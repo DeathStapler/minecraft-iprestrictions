@@ -1,0 +1,10 @@
+name: IPRestrictions
+main: com.hodel.minecraft.plugin.security.iprestrictions.IPRestrictions
+version: 0.1
+description: "Checks a players IP address against a list of already used IPs."
+commands:
+  ipr:
+    description: This is a test
+    usage: /ipr allow <player>
+    permission: ipr.allow
+    permission-message: You don't have ipr.allow permission.
