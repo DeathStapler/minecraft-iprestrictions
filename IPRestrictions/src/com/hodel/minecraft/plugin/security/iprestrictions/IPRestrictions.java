@@ -29,7 +29,6 @@ public class IPRestrictions extends JavaPlugin  {
     public void onEnable(){
         try {
             Configuration.loadConfig(instance);
-            IPLogger.info("Config Info: Limit Message = " + Configuration.getMsgLimit());
             manager = new DataManager();
             pListener = new PlayerListener(instance);
             Bukkit.getPluginManager().registerEvents(pListener, instance);
@@ -40,16 +39,14 @@ public class IPRestrictions extends JavaPlugin  {
             Bukkit.getPluginManager().disablePlugin(instance);
         }
         
-        // TODO Insert logic to be performed when the plugin is enabled
-    	getLogger().info("IPRestrictions Plugin Enabled!");
     	this.saveDefaultConfig();
 
     }
  
     @Override
     public void onDisable() {
-        // TODO Insert logic to be performed when the plugin is disabled
-    	getLogger().info("IPRestrictions Plugin Dinabled!");
+    	manager.close();
+    	getLogger().info("IPRestrictions Plugin Disabled!");
     }
 
     public File getUserFolder() {

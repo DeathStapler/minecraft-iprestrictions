@@ -2,9 +2,13 @@ limits:
   user:
     ips-allowed: '2'
     time-limit: '180'
+  ip:
+    users-allowed: '2'
+    time-limit: '180'
 messages:
   whitelist: 'You are not whitelisted'
-  limit: 'You have used too many IPs'
+  ip-limit: 'You have used too many IPs'
+  user-limit: 'You have used too many users on this IP'
 protection:
   ip-limit: true
   time-limit: true

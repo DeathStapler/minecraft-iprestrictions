@@ -101,16 +101,24 @@ public class PlayerListener implements Listener {
 	        return player.hasPermission(permission);
 	    }
 
-
+	    private boolean checkIp(PlayerLoginEvent event) {
+	    	if (!Configuration.useIPLimit()) {
+	    		return true;	    		
+	    	}
+	    	
+	    	return true;
+	    }
+	    
 	    private boolean checkNameToIp(PlayerLoginEvent event) {
 	    	if (!Configuration.useIPLimit()) {
 	    		return true;	    		
 	    	}
+	    	
 	        String name = event.getPlayer().getName().toLowerCase();
 	        String ip = event.getAddress().getHostAddress();
 	        List<String> ips;
 	        
-	     // Record the IP
+	        // Record the IP
         	plugin.getManager().addIP(name, ip);
 	        
 	        if (Configuration.useIPLimit()) {
@@ -120,24 +128,27 @@ public class PlayerListener implements Listener {
 	        	ips = null;
 	        }
 	        
-	        IPLogger.info("[IPR] : Number of IPs " + ips.size());
+	        //IPLogger.info("Number of IPs " + ips.size());
 
-        	if (!Configuration.useIPLimit()) {
-        	} else if (Configuration.useIPLimit() && ips.size() <= maxIPs) {
-IPLogger.info("IP limit either disabled or not reached for " + name + ".  Current=" + ips.size() + ", Max=" + maxIPs);
-	        } else if (Configuration.useIPLimit() && Configuration.useWhitelist() && ips.size() > maxIPs) {
-IPLogger.info("IP limit reached for " + name + ".  Checking Whitelist.");
-	        	// Add whitelist check
-	        	
-	        	// Add permission to ignore certain groups
-	        	
-	        	event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
-	            return false;
-	        } else {
-IPLogger.info("IP limit reached for " + name);
-	            event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
-	            return false;
-	        }
+    		if (ips.size() <= maxIPs) {
+//        		IPLogger.info("IP limit not reached for " + name + ".  Current=" + ips.size() + ", Max=" + maxIPs);
+    		} else {
+    			if (Configuration.useWhitelist()) {
+        		
+        			IPLogger.info("IP limit reached for " + name + ".  Checking Whitelist.");
+		        	// Add whitelist check
+		        	
+		        	// Add permission to ignore certain groups
+		        	
+		        	event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
+		            return false;
+    			} else {
+		        	IPLogger.info("IP limit reached for " + name);
+		            event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
+		            return false;
+    			}
+    		}
+
 	        return true;
 	    }
 

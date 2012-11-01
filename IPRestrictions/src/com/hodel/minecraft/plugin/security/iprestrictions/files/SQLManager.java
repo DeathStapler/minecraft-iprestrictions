@@ -18,18 +18,21 @@ public class SQLManager implements Manager {
 
     MySQL mysql;
     Connection conn;
+    long lastAccessSeconds;
+    int maxConnectionWaitSeconds = 1800;  // If the max period of time allowed between queries.  If over reconnect to database to prevent time-out issues.
 
     @Override
     public Manager setup() {
+    	lastAccessSeconds = System.currentTimeMillis() /1000l;
+    	
     	IPLogger.info("Running DB init");
-        String[] info = Configuration.getSQLInfo();
-        IPLogger.info("Openning Database: " + info[0] +", " + info[1] + ", "+ info[2] + ", "+ info[3] + ", " + info[4]);
 
         SQLConnect();
         
         if (mysql.checkConnection()) {
             mysql.query("CREATE TABLE IF NOT EXISTS ipr_ip_list (name VARCHAR(16), ip VARCHAR(160), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (name, ip));");
-            IPLogger.info("[" + Configuration.getPlugin().getName() + "] MySQL table ipr_ip_list create");
+            mysql.query("CREATE TABLE IF NOT EXISTS ipr_whitelist (name VARCHAR(16), PRIMARY KEY (name)");
+//            IPLogger.info("[" + Configuration.getPlugin().getName() + "] MySQL table ipr_ip_list create");
             return this;
         } else {
 // ERROR	
@@ -40,6 +43,7 @@ public class SQLManager implements Manager {
     private void SQLConnect() {
     	String[] info = Configuration.getSQLInfo();
     	
+    	IPLogger.info("Openning Database: " + info[0] +", " + info[1] + ", "+ info[2] + ", "+ info[3] + ", " + info[4]);
         mysql = new MySQL(Configuration.getPlugin().getLogger(), "[IPR]", info[0], info[1], info[4], info[2], info[3]);
         conn = mysql.getConnection();
         mysql.open();
@@ -47,8 +51,20 @@ public class SQLManager implements Manager {
         return;
     }
 
+    private void CheckWaitPeriod() {
+    	long curAccessSeconds = System.currentTimeMillis() /1000l;
+    	if (curAccessSeconds - lastAccessSeconds > maxConnectionWaitSeconds) {
+    		SQLConnect();
+    	}
+    }
+    
+    private void UpdateWaitPeriod() {
+    	lastAccessSeconds = System.currentTimeMillis() /1000l;
+    }
+    
     @Override
     public void close() {
+    	lastAccessSeconds = 0;
         try {
             conn.close();
             mysql.close();
@@ -61,11 +77,10 @@ public class SQLManager implements Manager {
     //// NOT WORKING YET
     @Override
     public String[] getIPs(String name) {
-    	if (!mysql.checkConnection()) {
-    		SQLConnect();
-    	}
-    	
+    	CheckWaitPeriod();
         ResultSet result = mysql.query("SELECT ip FROM ipr_ip_list WHERE name=' " + name + "' LIMIT 6;");
+        UpdateWaitPeriod();
+        
         if (result == null) {
             return null;
         }
@@ -104,12 +119,11 @@ public class SQLManager implements Manager {
 //            return;
 //        }
 
-    	if (!mysql.checkConnection()) {
-    		SQLConnect();
-    	}
+    	CheckWaitPeriod();
     	
         newIP = ip.trim();
         mysql.query("REPLACE INTO ipr_ip_list (name,ip) VALUES ('" + name + "','" + newIP + "');");
+        UpdateWaitPeriod();
     }
 
 
@@ -119,11 +133,9 @@ public class SQLManager implements Manager {
 	public String[] getIPs(String name, int playerTimeLimit) {
 		List<String> ip_list = new ArrayList<String>();
 		
-    	if (!mysql.checkConnection()) {
-    		SQLConnect();
-    	}
-    	
+    	CheckWaitPeriod();
 		String query = "SELECT ip FROM ipr_ip_list WHERE LOWER(name)=LOWER('" + name + "') AND ts > SYSDATE() - " + playerTimeLimit + ";";
+		UpdateWaitPeriod();
 		IPLogger.info("SQL Query: getIPs() : " + query);
 		ResultSet result = mysql.query(query);
         if (result == null) {
@@ -160,11 +172,10 @@ public class SQLManager implements Manager {
 	public int checkIPCount(String name, int seconds) throws SQLException {
 		int num = 0;
 		
-    	if (!mysql.checkConnection()) {
-    		SQLConnect();
-    	}
-    	
+    	CheckWaitPeriod();
 		String query = "SELECT count(ip) num FROM ipr_ip_list WHERE name=' " + name + "' AND ts > SYSDATE() - " + seconds + ";";
+		UpdateWaitPeriod();
+		
 		IPLogger.info("SQL Query: checkIPCount() : " + query);
 		ResultSet result = mysql.query(query);
         if (result == null) {
@@ -191,12 +202,11 @@ public class SQLManager implements Manager {
 	@Override
 	public boolean checkIP(String name, String ip, int seconds) throws SQLException {
 		int num = 0;
-		
-    	if (!mysql.checkConnection()) {
-    		SQLConnect();
-    	}
-    	
+
+    	CheckWaitPeriod();
 		String query = "SELECT count(ip) num FROM ipr_ip_list WHERE LOWER(name)=LOWER(' " + name + "') AND ip='"+ip+"' AND ts > SYSDATE() - " + seconds + ";";
+		UpdateWaitPeriod();
+		
 		IPLogger.info("SQL Query: checkIP() : " + query);
         ResultSet result = mysql.query(query);
         if (result == null) {

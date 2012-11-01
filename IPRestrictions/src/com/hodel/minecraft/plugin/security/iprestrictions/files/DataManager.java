@@ -22,6 +22,11 @@ public final class DataManager {
         
     }
 
+    public void close() {
+    	manager.close();
+    }
+    
+    
     public String[] getIPs(String name, int playerTimeLimit) {
         if (name == null) {
             return null;
