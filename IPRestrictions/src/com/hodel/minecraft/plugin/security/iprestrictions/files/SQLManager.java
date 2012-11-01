@@ -24,9 +24,9 @@ public class SQLManager implements Manager {
     	IPLogger.info("Running DB init");
         String[] info = Configuration.getSQLInfo();
         IPLogger.info("Openning Database: " + info[0] +", " + info[1] + ", "+ info[2] + ", "+ info[3] + ", " + info[4]);
-        mysql = new MySQL(Configuration.getPlugin().getLogger(), "[IPR]", info[0], info[1], info[4], info[2], info[3]);
-        conn = mysql.getConnection();
-        mysql.open();
+
+        SQLConnect();
+        
         if (mysql.checkConnection()) {
             mysql.query("CREATE TABLE IF NOT EXISTS ipr_ip_list (name VARCHAR(16), ip VARCHAR(160), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (name, ip));");
             IPLogger.info("[" + Configuration.getPlugin().getName() + "] MySQL table ipr_ip_list create");
@@ -35,6 +35,16 @@ public class SQLManager implements Manager {
 // ERROR	
         }
 		return null;
+    }
+    
+    private void SQLConnect() {
+    	String[] info = Configuration.getSQLInfo();
+    	
+        mysql = new MySQL(Configuration.getPlugin().getLogger(), "[IPR]", info[0], info[1], info[4], info[2], info[3]);
+        conn = mysql.getConnection();
+        mysql.open();
+        
+        return;
     }
 
     @Override
@@ -51,6 +61,10 @@ public class SQLManager implements Manager {
     //// NOT WORKING YET
     @Override
     public String[] getIPs(String name) {
+    	if (!mysql.checkConnection()) {
+    		SQLConnect();
+    	}
+    	
         ResultSet result = mysql.query("SELECT ip FROM ipr_ip_list WHERE name=' " + name + "' LIMIT 6;");
         if (result == null) {
             return null;
@@ -90,7 +104,10 @@ public class SQLManager implements Manager {
 //            return;
 //        }
 
-
+    	if (!mysql.checkConnection()) {
+    		SQLConnect();
+    	}
+    	
         newIP = ip.trim();
         mysql.query("REPLACE INTO ipr_ip_list (name,ip) VALUES ('" + name + "','" + newIP + "');");
     }
@@ -101,6 +118,11 @@ public class SQLManager implements Manager {
 	@Override
 	public String[] getIPs(String name, int playerTimeLimit) {
 		List<String> ip_list = new ArrayList<String>();
+		
+    	if (!mysql.checkConnection()) {
+    		SQLConnect();
+    	}
+    	
 		String query = "SELECT ip FROM ipr_ip_list WHERE LOWER(name)=LOWER('" + name + "') AND ts > SYSDATE() - " + playerTimeLimit + ";";
 		IPLogger.info("SQL Query: getIPs() : " + query);
 		ResultSet result = mysql.query(query);
@@ -137,6 +159,11 @@ public class SQLManager implements Manager {
 	@Override
 	public int checkIPCount(String name, int seconds) throws SQLException {
 		int num = 0;
+		
+    	if (!mysql.checkConnection()) {
+    		SQLConnect();
+    	}
+    	
 		String query = "SELECT count(ip) num FROM ipr_ip_list WHERE name=' " + name + "' AND ts > SYSDATE() - " + seconds + ";";
 		IPLogger.info("SQL Query: checkIPCount() : " + query);
 		ResultSet result = mysql.query(query);
@@ -164,6 +191,11 @@ public class SQLManager implements Manager {
 	@Override
 	public boolean checkIP(String name, String ip, int seconds) throws SQLException {
 		int num = 0;
+		
+    	if (!mysql.checkConnection()) {
+    		SQLConnect();
+    	}
+    	
 		String query = "SELECT count(ip) num FROM ipr_ip_list WHERE LOWER(name)=LOWER(' " + name + "') AND ip='"+ip+"' AND ts > SYSDATE() - " + seconds + ";";
 		IPLogger.info("SQL Query: checkIP() : " + query);
         ResultSet result = mysql.query(query);

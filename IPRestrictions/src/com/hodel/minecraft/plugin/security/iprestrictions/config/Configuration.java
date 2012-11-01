@@ -147,9 +147,9 @@ public class Configuration {
     
     public static String getMsgLimit() {
     	if (useTimeLimit()) {
-    		return msgLimit + " Current limit " + getPlayerTimeLimit() + " seconds.";
+    		return msgLimit + "\n (Max of " + getPlayerIpsAllowed() + " IPs within " + getPlayerTimeLimit() + " seconds)";
     	}
-    	return msgLimit;
+    	return msgLimit + "\n (Max of " + getPlayerIpsAllowed() + " IPs)";
     }
     
     public static IPRestrictions getPlugin() {

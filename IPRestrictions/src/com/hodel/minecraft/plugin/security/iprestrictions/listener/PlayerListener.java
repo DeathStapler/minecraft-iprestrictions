@@ -5,6 +5,8 @@ import com.hodel.minecraft.plugin.security.iprestrictions.config.Configuration;
 import com.hodel.minecraft.plugin.security.iprestrictions.logger.IPLogger;
 import java.util.Arrays;
 import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -108,16 +110,17 @@ public class PlayerListener implements Listener {
 	        String ip = event.getAddress().getHostAddress();
 	        List<String> ips;
 	        
+	     // Record the IP
+        	plugin.getManager().addIP(name, ip);
+	        
 	        if (Configuration.useIPLimit()) {
+	        	// Get the number of IPs player has connected with
 	        	ips = Arrays.asList(plugin.getManager().getIPs(name, playerTimeLimit));
 	        } else {
 	        	ips = null;
 	        }
 	        
 	        IPLogger.info("[IPR] : Number of IPs " + ips.size());
-	        
-	        // Record the IP
-        	plugin.getManager().addIP(name, ip);
 
         	if (!Configuration.useIPLimit()) {
         	} else if (Configuration.useIPLimit() && ips.size() <= maxIPs) {
@@ -128,11 +131,11 @@ IPLogger.info("IP limit reached for " + name + ".  Checking Whitelist.");
 	        	
 	        	// Add permission to ignore certain groups
 	        	
-	        	event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit());
+	        	event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
 	            return false;
 	        } else {
 IPLogger.info("IP limit reached for " + name);
-	            event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit());
+	            event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
 	            return false;
 	        }
 	        return true;
