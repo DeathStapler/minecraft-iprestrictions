@@ -42,6 +42,8 @@ public class PlayerListener implements Listener {
 	     */
 	    @EventHandler(priority = EventPriority.LOWEST)
 	    public void onPlayerJoin(PlayerLoginEvent event) {
+	    	final PlayerLoginEvent fevent = event;
+	    	
 	        if (event.getResult() != Result.ALLOWED) {
 	            return;
 	        }
@@ -50,9 +52,18 @@ public class PlayerListener implements Listener {
 	            return;
 	        }
 
+	        plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+	            @Override 
+	            public void run() {
+	            	checkNameToIp(fevent);
+	                //getServer().broadcastMessage("This message is broadcast by the main thread");
+	            }
+	        }, (20L*180L));  // 3 minutes - add this to config.yml
+/*	        
 	        if (!ip(event)) {
 	            return;
 	        }
+*/
 	    }
 
 	    private boolean isPlayerOnline(PlayerLoginEvent event) {
@@ -64,7 +75,7 @@ public class PlayerListener implements Listener {
 	        }
 	        return false;
 	    }
-
+/*
 	    private boolean ip(PlayerLoginEvent event) {
 	        if (!checkNameToIp(event)) {
 	            return false;
@@ -72,7 +83,7 @@ public class PlayerListener implements Listener {
 
 	        return true;
 	    }
-
+*/
 	    /**
 	     * Toggles the AntiMulti whitelist state.
 	     *
@@ -99,14 +110,6 @@ public class PlayerListener implements Listener {
 	     */
 	    public boolean checkPerm(Player player, String permission) {
 	        return player.hasPermission(permission);
-	    }
-
-	    private boolean checkIp(PlayerLoginEvent event) {
-	    	if (!Configuration.useIPLimit()) {
-	    		return true;	    		
-	    	}
-	    	
-	    	return true;
 	    }
 	    
 	    private boolean checkNameToIp(PlayerLoginEvent event) {
@@ -135,16 +138,17 @@ public class PlayerListener implements Listener {
     		} else {
     			if (Configuration.useWhitelist()) {
         		
-        			IPLogger.info("IP limit reached for " + name + ".  Checking Whitelist.");
 		        	// Add whitelist check
-		        	
+    				
+    				IPLogger.info("IP limit reached for " + name + ".  Checking Whitelist.");
 		        	// Add permission to ignore certain groups
-		        	
-		        	event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
+        			event.getPlayer().kickPlayer(Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
+//		        	event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
 		            return false;
     			} else {
 		        	IPLogger.info("IP limit reached for " + name);
-		            event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
+		        	event.getPlayer().kickPlayer(Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
+//		            event.disallow(Result.KICK_OTHER, Configuration.getMsgLimit() + "\nIP List:\n" + StringUtils.join(ips, "\n"));
 		            return false;
     			}
     		}
