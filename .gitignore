@@ -2,3 +2,8 @@
 .project
 .classpath
 /IPRestrictions/bin/
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
